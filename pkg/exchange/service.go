@@ -13,6 +13,7 @@ type service struct {
 	outputter          domain.Outputter
 }
 
+// NewService returns a new instance of the ExchangeService.
 func NewService(exchangeDownloader domain.ExchangeDownloader, outputter domain.Outputter) domain.ExchangeService {
 	return &service{
 		exchangeDownloader: exchangeDownloader,
@@ -25,6 +26,7 @@ const (
 	numberOfChecks = 2
 )
 
+// GetRates is a wrapper function for the handleRates, which also schedules it's concurrent executions.
 func (s *service) GetRates(ctx context.Context) error {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
@@ -36,20 +38,23 @@ func (s *service) GetRates(ctx context.Context) error {
 	return nil
 }
 
+// handleRates is the function that handles the logic of getting the rates from the downloader,
+// processing them and sending them to the outputter.
 func (s *service) handleRates(ctx context.Context) {
+	// Initiate the timestamp to record the time of the request.
 	timestamp := time.Now()
 
-	// get rates and metadata from the downloader
+	// Get rates and metadata from the downloader.
 	rates, metadata, err := s.exchangeDownloader.GetRates(ctx)
 	if err != nil {
 		fmt.Println(fmt.Errorf("error getting rates from the downloader for the %v timestamp: %w", timestamp, err))
 		return
 	}
 
-	// find the days in which rates are outside of specified range
+	// Find the days in which rates are outside of specified range
 	targetDays := findTargetDays(rates)
 
-	// pack it into the StructuredOutput
+	// Pack the data into the StructuredOutput.
 	o := domain.StructuredOutput{
 		OutputTimestamp:     timestamp,
 		RequestDuration:     metadata.RequestDuration,
@@ -59,14 +64,16 @@ func (s *service) handleRates(ctx context.Context) {
 		TargetDays:          targetDays,
 	}
 
-	// send the data to the outputter
+	// Send the data to the outputter.
 	err = s.outputter.Output(o)
 	if err != nil {
-		fmt.Println(fmt.Errorf("error sending the structured data with timestamp %v to the outputter: %w", timestamp, err))
+		fmt.Println(fmt.Errorf(
+			"error sending the structured data with timestamp %v to the outputter: %w",
+			timestamp,
+			err,
+		))
 		return
 	}
-
-	return
 }
 
 var (
@@ -74,6 +81,7 @@ var (
 	upperLimit = 4.7
 )
 
+// findTargetDays finds the days in which the exchange rates are outside of the specified range.
 func findTargetDays(rates domain.ExchangeRates) []string {
 	var targetDays []string
 

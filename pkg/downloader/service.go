@@ -5,16 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kirinson321/bsg-recruitment/pkg/domain"
 )
 
 type downloader struct {
+	httpClient *http.Client
 }
 
-func NewDownloader() domain.ExchangeDownloader {
-	return &downloader{}
+// NewDownloader returns a new instance of the ExchangeDownloader.
+func NewDownloader(c *http.Client) domain.ExchangeDownloader {
+	return &downloader{
+		httpClient: c,
+	}
 }
 
 var (
@@ -24,7 +29,7 @@ var (
 )
 
 func (d *downloader) GetRates(ctx context.Context) (domain.ExchangeRates, domain.RequestMetadata, error) {
-	result, metadata, err := downloadRates()
+	result, metadata, err := d.downloadRates()
 	if err != nil {
 		return domain.ExchangeRates{}, domain.RequestMetadata{}, fmt.Errorf("error downloading rates: %w", err)
 	}
@@ -32,22 +37,25 @@ func (d *downloader) GetRates(ctx context.Context) (domain.ExchangeRates, domain
 	return *result, *metadata, nil
 }
 
-func downloadRates() (*domain.ExchangeRates, *domain.RequestMetadata, error) {
-	// measure the duration of this request
-	start := time.Now()
-	// defer func() {
-
+// downloadRates is the function that handles the logic of downloading the rates from the exchange API.
+func (d *downloader) downloadRates() (*domain.ExchangeRates, *domain.RequestMetadata, error) {
+	// Construct the request.
 	req, err := http.NewRequest(http.MethodGet, exchangeAPIURL, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating request: %w", err)
 	}
+	// Set the User-Agent header to avoid getting blocked by the API.
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0")
 
-	resp, err := http.DefaultClient.Do(req)
+	// Start measuring the duration of this request.
+	start := time.Now()
+
+	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting rates: %w", err)
 	}
 	defer resp.Body.Close()
+	// Finish measuring the duration of the request.
 	rDuration := time.Since(start).Milliseconds()
 
 	if resp.StatusCode != http.StatusOK {
@@ -55,10 +63,11 @@ func downloadRates() (*domain.ExchangeRates, *domain.RequestMetadata, error) {
 	}
 
 	contentType := resp.Header.Get("Content-Type")
-	if contentType != expectedContentType {
+	if !strings.Contains(contentType, expectedContentType) {
 		return nil, nil, fmt.Errorf("expected Content-Type %v, got %v", expectedContentType, contentType)
 	}
 
+	// Assemble the output of the function.
 	rates := domain.ExchangeRates{}
 	err = json.NewDecoder(resp.Body).Decode(&rates)
 	if err != nil {

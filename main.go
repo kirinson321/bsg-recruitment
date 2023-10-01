@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,20 +17,20 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	downloader := downloader.NewDownloader()
+	// Prepare services.
+	c := http.DefaultClient
+
+	downloader := downloader.NewDownloader(c)
 	outputter := output.NewOutputter()
 	exchangeService := exchange.NewService(downloader, outputter)
 
+	// Prepare the log file.
 	err := prepLogFile()
 	if err != nil {
 		panic(err)
 	}
 
-	err = exchangeService.GetRates(ctx)
-	if err != nil {
-		panic(err)
-	}
-
+	// Listen for signals for graceful shutdown.
 	quitSignal := make(chan os.Signal, 1)
 	signal.Notify(quitSignal, syscall.SIGINT, syscall.SIGTERM)
 
@@ -40,12 +41,15 @@ func main() {
 		os.Exit(1)
 	}()
 
-	go exchangeService.GetRates(context.Background())
+	// Start the exchange rates service.
+	exchangeService.GetRates(ctx)
 }
 
+// prepLogFile verifies if a file with the same name as the log file exists, and if so, renames it to log.txt.old.
+// Then it creates a new log file with name log.txt.
 func prepLogFile() error {
 	// prepare the log file
-	// check if a file with the same name exists
+	// if a file with the same name exists, rename it to log.txt.old
 	if logFileExists() {
 		err := os.Rename(output.LogFileName, output.BackupLogFileName)
 		if err != nil {
@@ -53,7 +57,7 @@ func prepLogFile() error {
 		}
 	}
 
-	// create a new log file
+	// create a new log file with name log.txt
 	f, err := os.Create(output.LogFileName)
 	if err != nil {
 		panic(fmt.Errorf("error creating the log file: %w", err))

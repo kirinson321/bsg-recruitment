@@ -11,6 +11,7 @@ import (
 type outputter struct {
 }
 
+// NewOutputter returns a new instance of the Outputter.
 func NewOutputter() domain.Outputter {
 	return &outputter{}
 }
@@ -26,9 +27,10 @@ func (o *outputter) Output(data domain.StructuredOutput) error {
 	if err != nil {
 		return fmt.Errorf("error preparing output: %w", err)
 	}
+	// Add a newline for readability.
 	out += "\n"
 
-	// output the data to stdout and to the log.txt file
+	// Output the data to stdout and to the log.txt file.
 	f, err := os.OpenFile(LogFileName, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("error opening the log file for writing: %w", err)
@@ -45,6 +47,7 @@ func (o *outputter) Output(data domain.StructuredOutput) error {
 	return nil
 }
 
+// prepareOutput marshals the data into a JSON string for easier outputting.
 func prepareOutput(data domain.StructuredOutput) (string, error) {
 	// prepare the data for output
 	out, err := json.Marshal(data)
