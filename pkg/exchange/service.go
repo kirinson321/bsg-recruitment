@@ -23,7 +23,7 @@ func NewService(exchangeDownloader domain.ExchangeDownloader, outputter domain.O
 
 const (
 	interval       = 5 * time.Second
-	numberOfChecks = 2
+	numberOfChecks = 10
 )
 
 // GetRates is a wrapper function for the handleRates, which also schedules it's concurrent executions.
