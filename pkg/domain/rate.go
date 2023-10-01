@@ -11,7 +11,7 @@ type (
 	}
 
 	ExchangeDownloader interface {
-		GetRates(ctx context.Context)
+		GetRates(ctx context.Context) (ExchangeRates, RequestMetadata)
 	}
 
 	Outputter interface {
@@ -19,12 +19,12 @@ type (
 	}
 
 	StructuredOutput struct {
-		OutputTimestamp     time.Time     `json:"outputTimestamp"`
-		RequestDuration     int64         `json:"rquestDuration"`
-		ResponseHTTPCode    string        `json:"respHTTPCode"`
-		ResponseContentType string        `json:"respContentType"`
-		ResponseValidJSON   bool          `json:"respValidJSON"`
-		RatesData           ExchangeRates `json:"ratesData"`
+		OutputTimestamp     time.Time `json:"outputTimestamp"`
+		RequestDuration     int64     `json:"rquestDuration"`
+		ResponseHTTPCode    string    `json:"respHTTPCode"`
+		ResponseContentType string    `json:"respContentType"`
+		ResponseValidJSON   bool      `json:"respValidJSON"`
+		TargetDays          []string  `json:"targetDays"`
 	}
 
 	ExchangeRates struct {
@@ -38,5 +38,12 @@ type (
 		RateNumber    string `json:"no"`
 		EffectiveDate string `json:"effectiveDate"`
 		MidValue      string `json:"mid"`
+	}
+
+	RequestMetadata struct {
+		RequestDuration     int64
+		ResponseHTTPCode    string
+		ResponseContentType string
+		ResponseValidJSON   bool
 	}
 )
