@@ -22,7 +22,7 @@ func NewService(exchangeDownloader domain.ExchangeDownloader, outputter domain.O
 
 const (
 	interval       = 5
-	numberOfChecks = 10
+	numberOfChecks = 3
 )
 
 func (s *service) GetRates(ctx context.Context) error {
