@@ -3,7 +3,6 @@ package exchange
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/kirinson321/bsg-recruitment/pkg/domain"
@@ -31,7 +30,7 @@ func (s *service) GetRates(ctx context.Context) error {
 	}
 
 	// find the days in which rates are outside of specified range
-	targetDays, err := findTargetDays(rates)
+	targetDays := findTargetDays(rates)
 
 	// pack it into the StructuredOutput
 	o := domain.StructuredOutput{
@@ -57,20 +56,14 @@ var (
 	upperLimit = 4.7
 )
 
-func findTargetDays(rates domain.ExchangeRates) ([]string, error) {
+func findTargetDays(rates domain.ExchangeRates) []string {
 	var targetDays []string
 
 	for _, rate := range rates.Rates {
-
-		midValue, err := strconv.ParseFloat(rate.MidValue, 64)
-		if err == nil {
-			return nil, fmt.Errorf("error converting %v rate's midValue %v to float64: %w", rate.RateNumber, rate.MidValue, err)
-		}
-
-		if midValue < lowerLimit || midValue > upperLimit {
+		if rate.MidValue < lowerLimit || rate.MidValue > upperLimit {
 			targetDays = append(targetDays, rate.EffectiveDate)
 		}
 	}
 
-	return targetDays, nil
+	return targetDays
 }
