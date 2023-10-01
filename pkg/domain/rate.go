@@ -11,7 +11,7 @@ type (
 	}
 
 	ExchangeDownloader interface {
-		GetRates(ctx context.Context) (ExchangeRates, RequestMetadata)
+		GetRates(ctx context.Context) (*ExchangeRates, *RequestMetadata, error)
 	}
 
 	Outputter interface {

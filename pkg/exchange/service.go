@@ -25,7 +25,10 @@ func (s *service) GetRates(ctx context.Context) error {
 	timestamp := time.Now()
 
 	// get rates and metadata from the downloader
-	rates, metadata := s.exchangeDownloader.GetRates(ctx)
+	rates, metadata, err := s.exchangeDownloader.GetRates(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting rates from the downloader: %w", err)
+	}
 
 	// find the days in which rates are outside of specified range
 	targetDays, err := findTargetDays(rates)
