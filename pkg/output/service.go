@@ -16,7 +16,7 @@ func NewOutputter() domain.Outputter {
 
 var (
 	LogFileName       = "log.txt"
-	BackupLogFileName = "log.txt.bak"
+	BackupLogFileName = "log.txt.old"
 )
 
 func (o *outputter) Output(data domain.StructuredOutput) error {

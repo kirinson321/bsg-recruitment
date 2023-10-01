@@ -22,4 +22,5 @@ go.work
 
 # Project specific
 nbp
-
+log.txt
+log.txt.old

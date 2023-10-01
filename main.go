@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/kirinson321/bsg-recruitment/pkg/downloader"
 	"github.com/kirinson321/bsg-recruitment/pkg/exchange"
@@ -11,7 +13,8 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	downloader := downloader.NewDownloader()
 	outputter := output.NewOutputter()
@@ -27,7 +30,17 @@ func main() {
 		panic(err)
 	}
 
-	return
+	quitSignal := make(chan os.Signal, 1)
+	signal.Notify(quitSignal, syscall.SIGINT)
+
+	go func() {
+		sig := <-quitSignal
+		fmt.Printf("terminating due to signal %v\n", sig)
+		cancel()
+		os.Exit(1)
+	}()
+
+	go exchangeService.GetRates(context.Background())
 }
 
 func prepLogFile() error {
@@ -41,10 +54,11 @@ func prepLogFile() error {
 	}
 
 	// create a new log file
-	_, err := os.Create(output.LogFileName)
+	f, err := os.Create(output.LogFileName)
 	if err != nil {
 		panic(fmt.Errorf("error creating the log file: %w", err))
 	}
+	f.Close()
 
 	return nil
 }

@@ -20,13 +20,30 @@ func NewService(exchangeDownloader domain.ExchangeDownloader, outputter domain.O
 	}
 }
 
+const (
+	interval       = 5
+	numberOfChecks = 10
+)
+
 func (s *service) GetRates(ctx context.Context) error {
+	tick := time.Tick(interval * time.Second)
+	for range tick {
+		for i := 0; i < numberOfChecks; i++ {
+			go s.getRates(context.Background())
+		}
+	}
+
+	return nil
+}
+
+func (s *service) getRates(ctx context.Context) {
 	timestamp := time.Now()
 
 	// get rates and metadata from the downloader
 	rates, metadata, err := s.exchangeDownloader.GetRates(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting rates from the downloader: %w", err)
+		fmt.Println(fmt.Errorf("error getting rates from the downloader for the %v timestamp: %w", timestamp, err))
+		return
 	}
 
 	// find the days in which rates are outside of specified range
@@ -45,10 +62,11 @@ func (s *service) GetRates(ctx context.Context) error {
 	// send the data to the outputter
 	err = s.outputter.Output(o)
 	if err != nil {
-		return fmt.Errorf("error sending the structured data with timestamp %v to the outputter: %w", timestamp, err)
+		fmt.Println(fmt.Errorf("error sending the structured data with timestamp %v to the outputter: %w", timestamp, err))
+		return
 	}
 
-	return nil
+	return
 }
 
 var (
