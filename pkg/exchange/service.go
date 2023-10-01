@@ -21,22 +21,22 @@ func NewService(exchangeDownloader domain.ExchangeDownloader, outputter domain.O
 }
 
 const (
-	interval       = 5
-	numberOfChecks = 3
+	interval       = 5 * time.Second
+	numberOfChecks = 2
 )
 
 func (s *service) GetRates(ctx context.Context) error {
-	tick := time.Tick(interval * time.Second)
-	for range tick {
+	ticker := time.NewTicker(interval)
+	for range ticker.C {
 		for i := 0; i < numberOfChecks; i++ {
-			go s.getRates(context.Background())
+			go s.handleRates(context.Background())
 		}
 	}
 
 	return nil
 }
 
-func (s *service) getRates(ctx context.Context) {
+func (s *service) handleRates(ctx context.Context) {
 	timestamp := time.Now()
 
 	// get rates and metadata from the downloader

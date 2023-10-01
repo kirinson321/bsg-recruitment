@@ -31,7 +31,7 @@ func main() {
 	}
 
 	quitSignal := make(chan os.Signal, 1)
-	signal.Notify(quitSignal, syscall.SIGINT)
+	signal.Notify(quitSignal, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		sig := <-quitSignal
