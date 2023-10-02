@@ -5,32 +5,34 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kirinson321/bsg-recruitment/pkg/config"
 	"github.com/kirinson321/bsg-recruitment/pkg/domain"
 )
 
 type service struct {
 	exchangeDownloader domain.ExchangeDownloader
 	outputter          domain.Outputter
+	config             config.Config
 }
 
 // NewService returns a new instance of the ExchangeService.
-func NewService(exchangeDownloader domain.ExchangeDownloader, outputter domain.Outputter) domain.ExchangeService {
+func NewService(
+	exchangeDownloader domain.ExchangeDownloader,
+	outputter domain.Outputter,
+	config config.Config,
+) domain.ExchangeService {
 	return &service{
 		exchangeDownloader: exchangeDownloader,
 		outputter:          outputter,
+		config:             config,
 	}
 }
 
-const (
-	interval       = 5 * time.Second
-	numberOfChecks = 10
-)
-
 // GetRates is a wrapper function for the handleRates, which also schedules it's concurrent executions.
 func (s *service) GetRates(ctx context.Context) error {
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(s.config.RateCheckerInterval)
 	for range ticker.C {
-		for i := 0; i < numberOfChecks; i++ {
+		for i := uint(0); i < s.config.NumberOfChecks; i++ {
 			go s.handleRates(context.Background())
 		}
 	}

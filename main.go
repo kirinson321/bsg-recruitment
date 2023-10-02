@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/kirinson321/bsg-recruitment/pkg/config"
 	"github.com/kirinson321/bsg-recruitment/pkg/downloader"
 	"github.com/kirinson321/bsg-recruitment/pkg/exchange"
 	"github.com/kirinson321/bsg-recruitment/pkg/output"
@@ -17,12 +20,20 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	interval := flag.Uint("interval", 5, "sets the cadence in seconds in which checks should happen")
+	numberOfChecks := flag.Uint("numberOfChecks", 10, "sets the number of checks that should run every interval time")
+	flag.Parse()
+	config := config.Config{
+		RateCheckerInterval: (time.Duration(*interval) * time.Second),
+		NumberOfChecks:      *numberOfChecks,
+	}
+
 	// Prepare services.
 	c := http.DefaultClient
 
 	downloader := downloader.NewDownloader(c)
 	outputter := output.NewOutputter()
-	exchangeService := exchange.NewService(downloader, outputter)
+	exchangeService := exchange.NewService(downloader, outputter, config)
 
 	// Prepare the log file.
 	err := prepLogFile()
