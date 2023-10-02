@@ -32,7 +32,7 @@ type (
 		ResponseHTTPCode    string    `json:"respHTTPCode"`
 		ResponseContentType string    `json:"respContentType"`
 		ResponseValidJSON   bool      `json:"respValidJSON"`
-		TargetDays          []string  `json:"targetDays"`
+		TargetDays          []string  `json:"targetDays,omitempty"`
 	}
 
 	// ExchangeRates defines the structure of the data that is downloaded from the currency exchange API.
